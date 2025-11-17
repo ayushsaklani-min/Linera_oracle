@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: synapsenet-backend
+    env: node
+    plan: starter
+    rootDir: backend-v2
+    buildCommand: npm install
+    startCommand: npm run start
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: LINERA_RPC
+        value: https://your-linera-rpc-endpoint
+      - key: WS_PORT
+        value: "8090"
+

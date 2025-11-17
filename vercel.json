@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "framework": null,
+  "installCommand": "npm install --prefix frontend-v2",
+  "buildCommand": "npm run build --prefix frontend-v2",
+  "outputDirectory": "frontend-v2/dist",
+  "cleanUrls": true,
+  "trailingSlash": false
+}
+

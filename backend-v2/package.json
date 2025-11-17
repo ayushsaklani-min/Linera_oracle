@@ -1,0 +1,24 @@
+{
+  "name": "synapsenet-backend-v2",
+  "version": "2.0.0",
+  "description": "Multi-oracle aggregation backend for SynapseNet",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "ethers": "^6.8.1",
+    "ws": "^8.14.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^3.3.2",
+    "axios": "^1.6.0",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
