@@ -418,6 +418,11 @@ Follow conventional commits:
 
 ---
 
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/synapsenet/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/synapsenet/discussions)
+- **Email**: hello@synapsenet.io
 
 ---
 
