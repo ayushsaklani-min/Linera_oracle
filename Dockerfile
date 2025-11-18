@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     clang \
     make
 
+RUN rustup target add wasm32-unknown-unknown
 RUN cargo install --locked linera-service@0.15.5 linera-storage-service@0.15.5
 
 RUN apt-get install -y curl
@@ -17,6 +18,9 @@ RUN curl https://raw.githubusercontent.com/creationix/nvm/v0.40.3/install.sh | b
     && npm install -g pnpm
 
 WORKDIR /build
+
+# Copy pre-built WASM files
+COPY target/wasm32-unknown-unknown/release/*.wasm /build/target/wasm32-unknown-unknown/release/
 
 HEALTHCHECK CMD ["curl", "-s", "http://localhost:5173"]
 

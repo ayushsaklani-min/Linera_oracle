@@ -3,6 +3,9 @@ members = [
     "price-oracle",
     "contracts/price-oracle-contract",
     "services/price-oracle-service",
+    "oracle-microchain",
+    "metadata-microchain",
+    "subscription-microchain",
 ]
 resolver = "2"
 

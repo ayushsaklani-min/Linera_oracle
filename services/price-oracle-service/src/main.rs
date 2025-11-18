@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
+use async_graphql::{EmptySubscription, Object, Schema};
 use linera_sdk::{abi::WithServiceAbi, views::View, Service, ServiceRuntime};
 use price_oracle::{state::PriceOracle, PriceData, PriceOracleAbi};
 
@@ -80,6 +80,9 @@ impl EmptyMutation {
         true
     }
 }
+
+
+
 
 
 
