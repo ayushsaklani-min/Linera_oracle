@@ -1,0 +1,8 @@
+[project]
+name = "oracle-microchain"
+
+[contract]
+name = "oracle-microchain_contract"
+
+[service]
+name = "oracle-microchain_service"

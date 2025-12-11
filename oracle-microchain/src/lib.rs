@@ -2,6 +2,7 @@ use async_graphql::{Enum, InputObject, Request, Response, SimpleObject};
 use linera_sdk::{
     abi::{ContractAbi, ServiceAbi},
     graphql::GraphQLMutationRoot,
+    linera_base_types::ChainId,
 };
 use serde::{Deserialize, Serialize};
 
@@ -17,17 +18,29 @@ impl ServiceAbi for OracleAbi {
     type QueryResponse = Response;
 }
 
+pub const ORACLE_STREAM_NAME: &str = "oracle_price_feed";
+
 #[derive(Debug, Deserialize, Serialize, GraphQLMutationRoot)]
 pub enum Operation {
-    /// Update price with aggregated data from multiple oracles
-    UpdatePriceAggregated {
+    /// Submit price from oracle provider (called by provider chains)
+    SubmitPrice {
         token: String,
-        aggregated_price: f64,
-        oracle_inputs: Vec<OracleInput>,
-        median: f64,
-        twap: f64,
-        vwap: f64,
+        price: f64,
+        source: String,
         timestamp: u64,
+    },
+    /// Subscribe to price feed events
+    SubscribeTo {
+        chain_id: ChainId,
+    },
+    /// Unsubscribe from price feed events
+    UnsubscribeFrom {
+        chain_id: ChainId,
+    },
+    /// Register as oracle provider (Master chain only)
+    RegisterProvider {
+        provider_chain: ChainId,
+        source_name: String,
     },
     /// Update OHLC candle data
     UpdateCandle {
@@ -45,12 +58,9 @@ pub enum Operation {
         user_id: String,
         alert_id: String,
     },
-    /// Update oracle reputation
-    UpdateOracleReputation {
-        source: String,
-        accuracy: f64,
-        latency: u64,
-        uptime: f64,
+    /// Request aggregated price (triggers cross-chain aggregation)
+    RequestAggregation {
+        token: String,
     },
 }
 
@@ -128,4 +138,68 @@ pub struct AggregatedStats {
     pub avg_latency: u64,
     pub active_oracles: u64,
     pub network_uptime: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum OracleMessage {
+    /// Provider submits price to aggregator
+    SubmitPrice {
+        token: String,
+        price: f64,
+        source: String,
+        timestamp: u64,
+    },
+    /// Request price aggregation from providers
+    RequestPrice {
+        token: String,
+        requester: ChainId,
+    },
+    /// Aggregation result sent back to requester
+    AggregationResult {
+        token: String,
+        aggregated_price: f64,
+        median: f64,
+        twap: f64,
+        vwap: f64,
+        oracle_inputs: Vec<OracleInput>,
+        timestamp: u64,
+    },
+    /// Register provider chain
+    RegisterProvider {
+        provider_chain: ChainId,
+        source_name: String,
+    },
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum OracleEvent {
+    /// Price update event (streamed to subscribers)
+    PriceUpdate {
+        token: String,
+        price: f64,
+        aggregated_price: f64,
+        median: f64,
+        twap: f64,
+        vwap: f64,
+        oracle_breakdown: Vec<OracleInput>,
+        timestamp: u64,
+    },
+    /// New oracle provider registered
+    ProviderRegistered {
+        source: String,
+        chain_id: ChainId,
+    },
+    /// Alert triggered
+    AlertTriggered {
+        user_id: String,
+        alert_id: String,
+        token: String,
+        price: f64,
+    },
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OracleParameters {
+    pub master_chain: ChainId,
+    pub aggregator_chain: ChainId,
 }

@@ -1,18 +1,41 @@
 services:
+  # Option 1: Deploy everything together (Recommended)
   - type: web
-    name: synapsenet-backend
-    env: node
+    name: synapsenet-full
+    env: docker
     plan: starter
-    rootDir: backend-v2
-    buildCommand: npm install
-    startCommand: npm run start
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     autoDeploy: true
     healthCheckPath: /health
     envVars:
-      - key: LINERA_RPC
-        value: https://your-linera-rpc-endpoint
+      - key: PORT
+        value: "3001"
       - key: WS_PORT
         value: "8090"
+      - key: NODE_ENV
+        value: "production"
+
+  # Option 2: Backend only (if deploying Linera separately)
+  # Uncomment this and comment out Option 1 if needed
+  # - type: web
+  #   name: synapsenet-backend
+  #   env: node
+  #   plan: starter
+  #   rootDir: backend-v2
+  #   buildCommand: npm install
+  #   startCommand: npm run start
+  #   autoDeploy: true
+  #   healthCheckPath: /health
+  #   envVars:
+  #     - key: PORT
+  #       value: "3001"
+  #     - key: WS_PORT
+  #       value: "8090"
+  #     - key: LINERA_RPC
+  #       value: "http://your-linera-server:8080"
+  #     - key: NODE_ENV
+  #       value: "production"
 
 
 

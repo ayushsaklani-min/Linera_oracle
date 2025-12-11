@@ -1,41 +1,55 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, Zap, Users, Activity } from 'lucide-react'
 
-const queryVolumeData = [
-  { time: '00:00', queries: 4200 },
-  { time: '04:00', queries: 2800 },
-  { time: '08:00', queries: 9200 },
-  { time: '12:00', queries: 12800 },
-  { time: '16:00', queries: 15200 },
-  { time: '20:00', queries: 9800 },
-]
-
-const latencyData = [
-  { time: '6h ago', Chainlink: 18, Pyth: 22, API3: 16, RedStone: 12 },
-  { time: '4h ago', Chainlink: 16, Pyth: 20, API3: 18, RedStone: 14 },
-  { time: '3h ago', Chainlink: 20, Pyth: 18, API3: 20, RedStone: 16 },
-  { time: '2h ago', Chainlink: 17, Pyth: 16, API3: 18, RedStone: 14 },
-  { time: '1h ago', Chainlink: 19, Pyth: 18, API3: 16, RedStone: 12 },
-  { time: 'now', Chainlink: 18, Pyth: 20, API3: 17, RedStone: 13 },
-]
-
-const tokenDistribution = [
-  { name: 'ETH', value: 35, color: '#3b82f6' },
-  { name: 'BTC', value: 28, color: '#f59e0b' },
-  { name: 'SOL', value: 15, color: '#8b5cf6' },
-  { name: 'MATIC', value: 12, color: '#06b6d4' },
-  { name: 'LINK', value: 10, color: '#10b981' },
-]
-
-const oracleReputation = [
-  { name: 'Chainlink', score: 95, color: '#3b82f6' },
-  { name: 'Pyth', score: 93, color: '#8b5cf6' },
-  { name: 'API3', score: 91, color: '#06b6d4' },
-  { name: 'RedStone', score: 88, color: '#f59e0b' },
-]
-
 export default function Analytics() {
+  const [queryVolumeData, setQueryVolumeData] = useState([])
+  const [latencyData, setLatencyData] = useState([])
+  const [tokenDistribution, setTokenDistribution] = useState([])
+  const [oracleReputation, setOracleReputation] = useState([])
+  const [stats, setStats] = useState({
+    totalQueries: 0,
+    activeSubscriptions: 0,
+    avgLatency: 0,
+    successRate: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/analytics')
+        const data = await response.json()
+        
+        setQueryVolumeData(data.queryVolume)
+        setLatencyData(data.latencyData)
+        setTokenDistribution(data.tokenDistribution)
+        setOracleReputation(data.oracleReputation)
+        setStats(data.stats)
+        setLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error)
+        setLoading(false)
+      }
+    }
+
+    fetchAnalytics()
+    const interval = setInterval(fetchAnalytics, 10000) // Update every 10 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading analytics...</p>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="space-y-6">
       {/* Page Title */}
@@ -54,8 +68,8 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-400">Total Queries (24h)</p>
-              <h3 className="text-3xl font-bold mt-2">1.2M</h3>
-              <p className="text-sm text-green-400 mt-2">↑ 12.5% vs yesterday</p>
+              <h3 className="text-3xl font-bold mt-2">{stats.totalQueries.toLocaleString()}</h3>
+              <p className="text-sm text-green-400 mt-2">Success: {stats.successRate}%</p>
             </div>
             <TrendingUp className="w-10 h-10 text-blue-400 opacity-50" />
           </div>
@@ -70,8 +84,8 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-400">Avg Latency</p>
-              <h3 className="text-3xl font-bold mt-2">14ms</h3>
-              <p className="text-sm text-green-400 mt-2">↓ 2ms improvement</p>
+              <h3 className="text-3xl font-bold mt-2">{stats.avgLatency}ms</h3>
+              <p className="text-sm text-gray-400 mt-2">Oracle response time</p>
             </div>
             <Zap className="w-10 h-10 text-yellow-400 opacity-50" />
           </div>
@@ -85,9 +99,9 @@ export default function Analytics() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Active Users</p>
-              <h3 className="text-3xl font-bold mt-2">8,934</h3>
-              <p className="text-sm text-green-400 mt-2">↑ 234 new today</p>
+              <p className="text-sm text-gray-400">Active Subscriptions</p>
+              <h3 className="text-3xl font-bold mt-2">{stats.activeSubscriptions}</h3>
+              <p className="text-sm text-gray-400 mt-2">WebSocket connections</p>
             </div>
             <Users className="w-10 h-10 text-purple-400 opacity-50" />
           </div>

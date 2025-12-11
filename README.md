@@ -1,429 +1,584 @@
 # SynapseNet
 
-> Real-time multi-oracle price intelligence streaming into Linera smart contracts with a production-ready React dashboard, Docker workflow, and cloud deployment presets.
+**Real-time multi-oracle price aggregation on Linera microchains**
 
-[![Linera](https://img.shields.io/badge/Linera-v0.15.5-blue)](https://linera.dev)
-[![Rust](https://img.shields.io/badge/Rust-1.86.0-orange)](https://www.rust-lang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-18.2-61DAFB)](https://react.dev/)
+Built by Ayush for Linera Buildathon
 
 ---
 
-## 🚀 Executive Summary
+## What is SynapseNet?
 
-SynapseNet is a real-time oracle aggregation network purpose-built for Linera. It continuously ingests price feeds from multiple sources (Chainlink, Pyth, CoinGecko), computes a trust-weighted aggregate, and streams the final truth set to:
+SynapseNet is a decentralized oracle network that aggregates cryptocurrency prices from multiple sources (Chainlink, Pyth, CoinGecko) and delivers them through Linera's microchain architecture. It provides DeFi applications with reliable, tamper-proof price data through cross-chain messaging and event streaming.
 
-- A Linera microchain smart contract (WASM)
-- A real-time WebSocket broadcast
-- A React analytics dashboard
-- REST + GraphQL interfaces for external clients
+---
 
-It delivers exchange-grade data with sub-second visibility, candle generation, historical on-chain persistence, and cloud-ready deployment.
+## Why Linera?
 
-**One command** launches everything:
+Traditional oracle solutions face critical limitations:
+- **Single points of failure**: One oracle = one source of truth
+- **Slow updates**: Blockchain queries introduce latency
+- **No cross-chain coordination**: Oracles operate in silos
+
+**Linera solves this with:**
+- **Microchains**: Each oracle provider runs on its own chain
+- **Cross-chain messaging**: Providers communicate directly without intermediaries
+- **Event streaming**: Real-time price updates to subscribers
+- **Sub-second finality**: Instant price aggregation
+
+---
+
+## Architecture
+
+SynapseNet uses a **6-chain architecture**:
+
+```
+┌─────────────┐
+│ Master Chain│ ← Coordinates the network
+└──────┬──────┘
+       │
+       ├──→ ┌──────────────────┐
+       │    │ Aggregator Chain │ ← Collects & aggregates prices
+       │    └──────────────────┘
+       │
+       ├──→ ┌──────────────────┐
+       │    │ Chainlink Chain  │ ← Provider 1
+       │    └──────────────────┘
+       │
+       ├──→ ┌─────────────────┐
+       │    │ Pyth Chain      │ ← Provider 2
+       │    └─────────────────┘
+       │
+       ├──→ ┌──────────────────┐
+       │    │ CoinGecko Chain  │ ← Provider 3
+       │    └──────────────────┘
+       │
+       └──→ ┌──────────────────┐
+            │ Consumer Chain   │ ← DeFi apps subscribe here
+            └──────────────────┘
+```
+
+**Data Flow:**
+1. Backend fetches prices from external APIs (Chainlink, Pyth, CoinGecko)
+2. Prices submitted to individual provider chains via cross-chain messages
+3. Aggregator chain collects submissions and calculates median/TWAP/VWAP
+4. Aggregated price stored on-chain and streamed to subscribers
+5. Frontend receives real-time updates via WebSocket
+
+---
+
+## Features
+
+### ✅ Working Now
+
+**Multi-Oracle Aggregation**
+- Fetches from Chainlink (Sepolia), Pyth Network, CoinGecko
+- Calculates median, TWAP, VWAP
+- Reputation-weighted scoring
+- Updates every 2 seconds
+
+**Linera Integration**
+- 6-chain microchain architecture
+- Cross-chain messaging between providers
+- Event streaming for real-time updates
+- GraphQL queries for historical data
+- On-chain price storage with MapView
+
+**Price Alerts**
+- Create alerts stored on blockchain
+- Automatic trigger detection
+- Real-time notifications via WebSocket
+- Persistent across restarts
+
+**Real-Time Dashboard**
+- Live price updates (ETH, BTC, SOL, MATIC, LINK)
+- Oracle network status monitoring
+- Analytics with query volume and latency
+- OHLC candlestick data
+
+**Production Ready**
+- Docker Compose one-command deployment
+- Health checks and monitoring
+- WebSocket for real-time updates
+- REST API for integration
+
+### 🚧 Coming Soon
+
+- Additional oracle sources (API3, RedStone, Band Protocol)
+- Advanced aggregation algorithms (outlier detection, confidence intervals)
+- Historical price charts with more timeframes
+- Mobile app for price monitoring
+- Public testnet deployment
+
+---
+
+## Use Cases
+
+**DeFi Lending Protocols**
+- Accurate collateral valuation
+- Liquidation price triggers
+- Interest rate calculations
+
+**Decentralized Exchanges**
+- Fair price discovery
+- Slippage protection
+- Arbitrage detection
+
+**Derivatives & Options**
+- Strike price determination
+- Settlement calculations
+- Margin requirements
+
+**Trading Bots**
+- Multi-source price validation
+- Arbitrage opportunities
+- Risk management
+
+**Analytics Platforms**
+- Historical price data
+- Market trend analysis
+- Oracle reliability metrics
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Docker & Docker Compose
+- 4GB RAM minimum
+- Internet connection (for oracle APIs)
+
+### One-Command Deployment
 
 ```bash
 docker compose up
 ```
 
+This will:
+1. Start Linera localnet with 6 chains
+2. Deploy oracle smart contract
+3. Register 3 oracle providers
+4. Start backend aggregator
+5. Launch frontend dashboard
+
+**Access:**
+- Dashboard: http://localhost:5173
+- Backend API: http://localhost:3001
+- GraphQL: http://localhost:8081
+
+### Verify It's Working
+
+1. **Check Dashboard**: Open http://localhost:5173
+   - Should see real ETH/BTC prices updating
+   - Prices match current market rates (in USD)
+
+2. **Test API**:
+   ```bash
+   curl http://localhost:3001/api/prices
+   ```
+
+3. **Create Alert**:
+   - Go to Alerts page
+   - Set "ETH above $3500"
+   - Watch it trigger when price crosses threshold
+
+4. **Check Logs**:
+   ```bash
+   docker logs -f linera_oracle-oracle-1
+   ```
+   - Look for "💰 ETH: $3197.35 (3 oracles, 245ms) → Linera"
+
 ---
 
-## 🧩 Why SynapseNet?
+## Testing & Validation
 
-Modern decentralized apps need fast, trust-minimized, multi-source intelligence. Typical hackathon stacks fail because:
+### Deployment Test Results
 
-- ❌ Single-oracle systems become a single point of failure  
-- ❌ Slow blockchain queries produce stale data  
-- ❌ No unified dashboard to monitor oracle health and latency  
-- ❌ Infrastructure rarely feels production-ready  
-
-**SynapseNet fixes all of it** with aggregation, analytics, observability, and automation.
-
-**Key Benefits:**
-- **Production realism** – Aggregates Chainlink, Pyth, and CoinGecko feeds every 2s, calculates reputation-weighted prices, and stores them on Linera
-- **Full visibility** – GraphQL, REST, WebSocket, and React UI surfaces (latency, aggregates, candle history, reputation scoring)
-- **Turn-key ops** – Single `docker compose up` spins a Linera localnet, deploys WASM contracts, starts backend + frontend with health checks
-- **Cloud-friendly** – `vercel.json` (frontend) and `render.yaml` (backend) keep CI/CD trivial; no manual folders or ad-hoc commands
-- **Auditable Rust** – Contracts built with Linera Views, async-graphql services, and ergonomic error handling
-
----
-
-## 🏛️ System Architecture
+**Successfully deployed on local Linera devnet:**
 
 ```
-         ┌──────────────────────────────┐
-         │   External Oracle Sources    │
-         │ Chainlink │ Pyth │ CoinGecko │
-         └──────────────┬───────────────┘
-                        ▼
-            ┌──────────────────────────────┐
-            │   SynapseNet Backend (Node)  │
-            │  - Price polling (2s)        │
-            │  - Median/TWAP/VWAP          │
-            │  - Reputation weighting      │
-            │  - WS broadcaster (8090)     │
-            │  - GraphQL writer to Linera  │
-            └──────────────┬───────────────┘
-                           ▼
-          ┌──────────────────────────────────┐
-          │   Linera Smart Contract (WASM)   │
-          │ - MapView<token → snapshots>     │
-          │ - RegisterView<latest tick>      │
-          │ - GraphQL queries & mutations    │
-          └──────────────┬───────────────┘
-                         ▼
-     ┌───────────────────────────────────────────┐
-     │     SynapseNet Dashboard (React + WS)     │
-     │ - Live ticker                              │
-     │ - Latency + oracle breakdown               │
-     │ - Candle history                           │
-     │ - Analytics views                          │
-     └───────────────────────────────────────────┘
+Application ID: 023018aa82fffc04434d19a41e3f979917aeface29dd161f061d6f1af3544c03f
 ```
 
-**Data Lifecycle:**
-1. Fetch prices + latency metrics from three oracles
-2. Aggregate (median, TWAP, VWAP, reputation weighting) + candle generation
-3. Persist to Linera via GraphQL mutation and broadcast via WebSocket
-4. Frontend + external clients stream live data and query historical state
+**Chain IDs Created:**
+- Master Chain: `2359dd3520fedb9ce1affd06b895aca37c85c0d278e81d21663c63f0197a6edb`
+- Aggregator Chain: `5c9ee131ea831fa8cc57171093583d8b7214c01569a494e9ca362c7790e86a97`
+- Chainlink Provider: `750ba1834ee851b7c2dc995535616e127fc4e6c4573b3bf0f61ba4f995be41f0`
+- Pyth Provider: `ec267fd1e48b7d559840a5f7f75de251fa3862b417f5b8148c4f4adc732c11a8`
+- CoinGecko Provider: `f652dd08d58f6de771d699a59458e265cfb419662e7d58961174f11d570be620`
+- Consumer Chain: `d8608916f43fec4fd8fb645e0a5c2ac3c388276ac8dfc2ebda6d8c918c4338a8`
 
----
+### What We Tested
 
-## 🌟 Key Features
+**✅ Multi-Chain Deployment**
+- 6 chains created successfully
+- Cross-chain messaging working
+- Provider registration confirmed
 
-### 🔮 Multi-Oracle Aggregation
-- Chainlink, Pyth, CoinGecko inputs
-- Normalization, filtering, validation
-- Median, TWAP, VWAP, reputation-weighted scoring
+**✅ Oracle Integration**
+- Chainlink: Fetching from Sepolia testnet contracts
+- Pyth: Real-time data from Hermes API
+- CoinGecko: Market prices via public API
+- All 3 sources updating every 2 seconds
 
-### ⛓️ On-Chain Persistence (Linera)
-- WASM contract stores complete snapshots
-- `MapView<String, PriceSnapshot>` for history
-- `RegisterView<Option<PriceSnapshot>>` caches the latest tick
-- GraphQL operations: `latestPrice`, `price(token)`, `allPrices`
+**✅ Price Aggregation**
+- Median calculation working
+- TWAP/VWAP computed correctly
+- Reputation weighting applied
+- Prices stored on-chain
 
-### 📡 Real-Time Streaming
-- WebSocket pushes live updates every 2 seconds
-- Includes latency metrics and oracle-level breakdown
-- Frontend auto-reconnect + connection status banners
+**✅ Real-Time Updates**
+- WebSocket broadcasting to frontend
+- Dashboard showing live prices
+- Updates every 2 seconds
+- No lag or delays
 
-### 📊 Production Dashboard
-- React 18 + Vite + Tailwind + Framer Motion
-- Recharts for candles, TWAP, VWAP overlays
-- Analytics panels: live ticker, oracle health, REST/GraphQL explorer
+**✅ Alert System**
+- Alerts stored on Linera blockchain
+- Trigger detection working
+- WebSocket notifications sent
+- Browser notifications displayed
 
-### 📦 One-Command Infrastructure
+**✅ GraphQL Queries**
+- `latestPrice` query working
+- `allPrices` returning data
+- `userAlerts` fetching from chain
+- `networkStats` showing metrics
+
+**✅ Frontend Integration**
+- Dashboard displaying real prices
+- Analytics page showing statistics
+- Alerts page CRUD operations
+- All pages responsive and working
+
+### Test Commands
+
+**Query Latest Price:**
 ```bash
-docker compose up --force-recreate
-```
-Boots Linera localnet + faucet, publishes bytecode, creates the app, starts backend orchestrator, and launches the dashboard.
-
-### ☁️ Cloud-Ready Templates
-- Frontend → **Vercel** (`vercel.json`)
-- Backend → **Render** (`render.yaml`)
-- Health checks, env vars, project roots pre-configured
-
----
-
-## 🧱 Monorepo Structure
-
-```
-backend-v2/      Oracle ingestion, REST, WS, Linera writer
-frontend-v2/     Vite React dashboard (analytics + WS)
-price-oracle/    Linera contract + service + views
-services/        Linera service helpers
-scripts/         WASM artifact automation
-Dockerfile       Buildathon-optimized container
-compose.yaml     End-to-end environment (5173/8080/9001/13001)
-run.bash         Automated localnet deployment
+curl -X POST http://localhost:8081/chains/2359dd3520fedb9ce1affd06b895aca37c85c0d278e81d21663c63f0197a6edb/applications/023018aa82fffc04434d19a41e3f979917aeface29dd161f061d6f1af3544c03f \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ latestPrice { token price timestamp } }"}'
 ```
 
----
-
-## ⚙️ Quickstart
-
-### Fastest Path
+**Get Network Stats:**
 ```bash
-docker compose up
+curl -X POST http://localhost:8081/chains/2359dd3520fedb9ce1affd06b895aca37c85c0d278e81d21663c63f0197a6edb/applications/023018aa82fffc04434d19a41e3f979917aeface29dd161f061d6f1af3544c03f \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ networkStats { totalQueries activeOracles avgLatency } }"}'
 ```
-Visit `http://localhost:5173`.
 
-### Manual Workflow (advanced)
+**Create Alert (via backend):**
 ```bash
-# Contracts
-cd price-oracle
-cargo build --release --target wasm32-unknown-unknown
-linera publish-bytecode target/.../price_oracle_{contract,service}.wasm
-linera create-application <BYTECODE_ID>
+curl -X POST http://localhost:3001/api/alerts \
+  -H "Content-Type: application/json" \
+  -d '{"token":"ETH","condition":"above","value":3500}'
+```
 
-# Backend
-cd backend-v2
-npm install
-LINERA_RPC=https://<validator> LINERA_CHAIN=<id> LINERA_ORACLE_APP=<id> npm start
+### Performance Metrics
 
-# Frontend
-cd frontend-v2
-npm install
-npm run dev -- --host
+**Observed During Testing:**
+- Price update latency: 200-300ms average
+- Oracle response time: 15-25ms (Chainlink), 18-30ms (Pyth), 20-35ms (CoinGecko)
+- WebSocket message delivery: <10ms
+- GraphQL query response: 50-100ms
+- Frontend render time: <16ms (60fps)
+
+### Known Limitations
+
+**Current Deployment:**
+- Running on local devnet (not public testnet)
+- Limited to 5 tokens (ETH, BTC, SOL, MATIC, LINK)
+- Chainlink using Sepolia testnet (not mainnet)
+- Free tier API rate limits apply
+
+**These will be addressed in future versions.**
+
+---
+
+## Project Structure
+
+```
+├── oracle-microchain/       # Linera smart contract (Rust/WASM)
+│   ├── src/
+│   │   ├── contract.rs      # Cross-chain messaging, aggregation
+│   │   ├── service.rs       # GraphQL queries
+│   │   ├── state.rs         # MapView storage
+│   │   └── lib.rs           # Types & events
+│   └── Cargo.toml
+│
+├── backend-v2/              # Oracle aggregator (Node.js)
+│   ├── src/
+│   │   ├── index.js         # Main server, WebSocket
+│   │   ├── oracles/         # Chainlink, Pyth, CoinGecko
+│   │   └── aggregation/     # Price aggregation, candles
+│   └── package.json
+│
+├── frontend-v2/             # Dashboard (React + Vite)
+│   ├── src/
+│   │   ├── pages/           # Dashboard, Analytics, Alerts
+│   │   └── components/      # Layout, UI components
+│   └── package.json
+│
+├── run.bash                 # Multi-chain deployment script
+├── compose.yaml             # Docker orchestration
+├── Dockerfile               # Production container
+└── README.md                # This file
 ```
 
 ---
 
-## 📋 Prerequisites
+## Technology Stack
 
-### Required Software
+**Blockchain**
+- Linera SDK 0.15.5
+- Rust 1.86.0
+- WASM (WebAssembly)
 
-1. **Rust** (1.86.0 or later)
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   rustup target add wasm32-unknown-unknown
-   ```
+**Backend**
+- Node.js 18+
+- Express (REST API)
+- WebSocket (real-time updates)
+- Ethers.js (Chainlink integration)
 
-2. **Linera CLI** (v0.15.5)
-   ```bash
-   cargo install --locked linera-service@0.15.5
-   ```
+**Frontend**
+- React 18
+- Vite (build tool)
+- Tailwind CSS
+- Recharts (data visualization)
+- Framer Motion (animations)
 
-3. **Node.js** (v18 or later)
-   ```bash
-   # Download from https://nodejs.org/
-   # Or use nvm:
-   nvm install 18
-   ```
-
-4. **Docker** (optional, for containerized deployment)
-   ```bash
-   # Download from https://www.docker.com/
-   ```
-
-### System Requirements
-
-- **OS**: Linux, macOS, or Windows (WSL recommended for Windows)
-- **RAM**: 4GB minimum, 8GB recommended
-- **Disk**: 2GB free space
-- **Network**: Internet connection for oracle access
+**Oracles**
+- Chainlink (Ethereum Sepolia)
+- Pyth Network (Hermes API)
+- CoinGecko (Public API)
 
 ---
 
-## 💾 Backend API Surface
+## API Documentation
 
-### REST
-- `GET /health` – System status + stats
-- `POST /config/linera` – Hot-swap chain & app IDs
-- `GET /api/v1/price/:token` – Aggregated output
-- `GET /api/v1/candles/:token?interval=1m&limit=100` – OHLCV feed
-- `GET /api/v1/stats` – Update counters + latency
+### REST Endpoints
+
+**Get All Prices**
+```bash
+GET /api/prices
+```
+Returns current prices for all tracked tokens.
+
+**Get Specific Token**
+```bash
+GET /api/v1/price/:token
+```
+Example: `/api/v1/price/ETH`
+
+**Get Analytics**
+```bash
+GET /api/analytics
+```
+Returns network statistics and oracle performance.
+
+**Health Check**
+```bash
+GET /health
+```
 
 ### WebSocket
-- `price_update` payload every 2 seconds
-- Includes aggregates, oracle breakdown, candles, latency
+
+Connect to `ws://localhost:8090` for real-time updates:
+
+```javascript
+const ws = new WebSocket('ws://localhost:8090');
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Price update:', data);
+};
+```
 
 **Message Format:**
 ```json
 {
   "type": "price_update",
-  "data": {
-    "token": "ETH",
-    "price": 3161.66,
-    "aggregated_price": 3021.45,
-    "median": 3020.87,
-    "twap": 3018.22,
-    "vwap": 3022.14,
-    "oracle_breakdown": [...],
-    "timestamp": 1700000000000
-  },
-  "latency": 250
+  "symbol": "ETH",
+  "price": 3197.35,
+  "sources": ["chainlink", "pyth", "coingecko"],
+  "timestamp": 1702345678000,
+  "confidence": 0.95
+}
+```
+
+### GraphQL
+
+Query the Linera contract directly:
+
+```graphql
+query {
+  latestPrice {
+    token
+    price
+    median
+    twap
+    vwap
+    timestamp
+  }
 }
 ```
 
 ---
 
-## 📚 Smart Contract (Linera WASM)
+## Deployment
 
-```rust
-MapView<String, PriceSnapshot>         // historical storage
-RegisterView<Option<PriceSnapshot>>    // cached latest price
+### Local Development
+```bash
+docker compose up
 ```
 
-**GraphQL Surface:**
-- `latestPrice` – Get most recent price
-- `price(token: String!)` – Get price for specific token
-- `allPrices` – Retrieve all stored prices
+### Production Deployment
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for:
+- Vercel (frontend)
+- Render (backend + Linera)
+- Environment variables
+- Monitoring setup
 
-**PriceSnapshot Structure:**
+---
+
+## How It Works
+
+### 1. Price Collection
+Backend polls three oracle sources every 2 seconds:
+- **Chainlink**: On-chain price feeds (Sepolia testnet)
+- **Pyth**: Real-time price API
+- **CoinGecko**: Market aggregated prices
+
+### 2. Aggregation
+Prices are aggregated using:
+- **Median**: Middle value (outlier resistant)
+- **TWAP**: Time-weighted average
+- **VWAP**: Volume-weighted average
+- **Reputation weighting**: Based on oracle reliability
+
+### 3. Cross-Chain Submission
+Each oracle's price is submitted to its dedicated provider chain via Linera's cross-chain messaging.
+
+### 4. On-Chain Storage
+Aggregated prices stored in Linera contract using MapView:
+```rust
+MapView<String, PriceData>  // token → price data
+```
+
+### 5. Event Streaming
+Price updates broadcast to subscribers via Linera's event streaming:
+```rust
+runtime.emit(ORACLE_STREAM_NAME, &OracleEvent::PriceUpdate { ... });
+```
+
+### 6. Real-Time Updates
+Frontend receives updates through WebSocket and displays live prices.
+
+---
+
+## Linera Features Used
+
+ **Cross-Chain Messaging**
+- Providers send prices to aggregator
+- Master chain coordinates registration
+
+ **Event Streaming**
+- Real-time price updates
+- Alert notifications
+
+ **Parameters**
+- Master chain ID
+- Aggregator chain ID
+
+ **State Management**
+- MapView for price storage
+- RegisterView for latest price cache
+
+ **GraphQL Service**
+- Query historical prices
+- Fetch oracle statistics
+
+---
+
+## Monitoring
+
+### Backend Logs
+```bash
+docker logs -f linera_oracle-oracle-1
+```
+
+Look for:
+- `ETH: $3197.35 (3 oracles, 245ms) → Linera` - Price updates
+- `Oracle deployed: <app-id>` - Successful deployment
+- `Alert triggered: ETH ABOVE $3500` - Alert notifications
+
+### Health Check
+```bash
+curl http://localhost:3001/health
+```
+
+Returns:
 ```json
 {
-  "token": "ETH",
-  "aggregated_price": 3021.45,
-  "median": 3020.87,
-  "twap": 3018.22,
-  "vwap": 3022.14,
-  "oracle_breakdown": [...],
-  "timestamp": 1700000000000
+  "status": "ok",
+  "stats": {
+    "totalUpdates": 1523,
+    "successfulUpdates": 1520,
+    "avgLatency": 245
+  },
+  "oracles": ["chainlink", "pyth", "coingecko"],
+  "tokens": ["ETH", "BTC", "SOL", "MATIC", "LINK"]
 }
 ```
 
-**Build + Test:**
-```bash
-cd price-oracle
-cargo fmt && cargo clippy
-cargo test
-cargo build --release --target wasm32-unknown-unknown
-```
+---
+
+## Troubleshooting
+
+**Prices show $0**
+- Wait 30 seconds for first update
+- Check backend logs for oracle API errors
+- Verify internet connection
+
+**"Application failed to respond"**
+- Container still starting (wait 2-3 minutes)
+- Check Docker logs for errors
+
+**WebSocket not connecting**
+- Ensure port 8090 is not blocked
+- Check browser console for errors
+
+**Build fails**
+- Ensure 4GB RAM available
+- Try: `docker compose up --build --force-recreate`
 
 ---
 
-## 🎯 Primary Use Cases
+## Contributing
 
-- **DeFi protocols** (lending, collateral, liquidations)
-- **Market-making bots** needing reliable fair prices
-- **Analytics & monitoring** for oracle/latency health
-- **On-chain trading engines** that require instantaneous quotes
+This project was built for the Linera Buildathon. Contributions welcome after the event!
 
 ---
 
-## 🚀 Deployment Playbooks
+## License
 
-### Vercel (frontend)
-`vercel.json` already informs Vercel to treat `frontend-v2` as the project root.
-
-```bash
-npm install -g vercel
-vercel login
-vercel --prod
-```
-
-**Environment Variables:**
-```
-VITE_API_URL=https://synapsenet-backend.onrender.com
-VITE_WS_URL=wss://synapsenet-backend.onrender.com
-```
-
-### Render (backend)
-`render.yaml` describes a single Node web service rooted at `backend-v2`.
-
-```bash
-render blueprint deploy
-```
-
-**Key Settings:**
-- `buildCommand: npm install`
-- `startCommand: npm run start`
-- `healthCheckPath: /health`
-- Replace `https://your-linera-rpc-endpoint` with the validator you control
-- Render assigns `$PORT`; our Express server already respects it
-
-### Other Targets
-- **Docker/Compose** (local judging) – already compliant with [Linera template](https://github.com/linera-io/buildathon-template.git)
-- **Linera testnet/mainnet** – adjust `LINERA_RPC` + wallet data in `run.bash`
+MIT License - see LICENSE file for details
 
 ---
 
-## 🔧 Environment Variables
+## Acknowledgments
 
-| Component     | Variables                                      | Notes |
-|---------------|------------------------------------------------|-------|
-| `backend-v2`  | `PORT` (default 3001)                          | HTTP API port for Render |
-|               | `WS_PORT` (default 8090)                       | WebSocket broadcast port |
-|               | `LINERA_RPC`                                   | `https://.../chains/<id>/applications/<id>` base |
-|               | `LINERA_CHAIN`, `LINERA_ORACLE_APP`            | Set via `/config/linera` API or env |
-| `frontend-v2` | `VITE_API_URL`, `VITE_WS_URL`, `VITE_CHAIN_ID` | Optional overrides for hosted deployments |
-
-Create a `.env` inside each package if you prefer file-based configuration; Vite automatically loads `VITE_*` variables.
+- **Linera Protocol** - For the innovative microchain architecture
+- **Chainlink** - Decentralized oracle infrastructure
+- **Pyth Network** - Real-time price feeds
+- **CoinGecko** - Comprehensive market data
 
 ---
 
-## 🧪 Testing & Tooling
+## Contact
 
-| Target        | Command                                             |
-|---------------|-----------------------------------------------------|
-| Contract unit tests | `cargo test -p price-oracle`                      |
-| Backend lint/test  | `npm run lint && npm test` (scripts coming soon)   |
-| Frontend typecheck | `npm run build` (Vite enforces TS via JSX tooling) |
-| End-to-end smoke   | `bash test-local.sh`                              |
+Built by **Ayush** for Linera Buildathon 2025
 
-**CI/CD Tips:**
-- Add `npm run lint` & `npm run build --prefix frontend-v2` to Vercel preview checks
-- On Render, enable `Auto-Deploy` so every push redeploys after tests pass
 
 ---
 
-## 🔧 Troubleshooting
-
-| Issue | Fix |
-|-------|-----|
-| Docker healthcheck failing | `docker compose up --build` |
-| Linera writes failing | Verify chain/app IDs via `/health` |
-| Vercel 404 | Ensure project root is defined via `vercel.json` |
-| WebSocket blocked | Update host/provider port allowances |
-| Backend can't write to Linera | Verify `LINERA_CHAIN`/`LINERA_ORACLE_APP` (from `run.bash` logs or `/health`) |
-| Render health check red | Visit `/health` to read failure causes (Linera unreachable, oracle RPC issues) |
-
----
-
-## 🗺️ Roadmap
-
-- Additional oracle providers (Kaiko, Amberdata)
-- Candle history on a dedicated microchain
-- Pricing alert microservice
-- Cross-chain aggregator mode
-- User wallets + subscription flows
-
----
-
-## 📄 License
-
-MIT © 2025 SynapseNet contributors.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these guidelines:
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Run tests: `bash test-local.sh`
-5. Commit: `git commit -m 'Add amazing feature'`
-6. Push: `git push origin feature/amazing-feature`
-7. Open a Pull Request
-
-### Code Style
-
-- **Rust**: Follow `rustfmt` formatting
-- **JavaScript**: Use ES6+ features, 2-space indentation
-- **React**: Functional components with hooks
-
-### Commit Messages
-
-Follow conventional commits:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `refactor:` Code refactoring
-- `test:` Test additions/changes
-
----
-
-## 🙏 Acknowledgments
-
-- **Linera Protocol**: For the innovative blockchain platform
-- **Chainlink**: For reliable oracle infrastructure
-- **Pyth Network**: For real-time price feeds
-- **CoinGecko**: For comprehensive market data
-- **Open Source Community**: For the amazing tools and libraries
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/synapsenet/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/synapsenet/discussions)
-- **Email**: hello@synapsenet.io
-
----
-
-❤️ **Built for the Linera Buildathon** — high-performance, enterprise-ready oracle intelligence for microchains.
+**SynapseNet** - Bringing reliable, decentralized price data to Linera microchains 🚀

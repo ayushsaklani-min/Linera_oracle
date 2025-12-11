@@ -1,10 +1,20 @@
 services:
-  app:
+  oracle:
     build: .
     ports:
-    - "5173:5173" # Web app
-    - "8080:8080" # faucet
-    - "9001:9001" # shard proxy
-    - "13001:13001" # shard
+      - "5173:5173" # Frontend
+      - "8080:8080" # Faucet
+      - "8081:8081" # GraphQL Node A
+      - "8082:8082" # GraphQL Node B
+      - "8083:8083" # GraphQL Node C
+      - "3001:3001" # Backend API
+      - "8090:8090" # WebSocket
+      - "9001:9001" # Shard proxy
+      - "13001:13001" # Shard
     volumes:
-    - .:/build
+      - .:/build
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -2947,6 +2947,7 @@ dependencies = [
  "async-graphql",
  "linera-sdk",
  "linera-views",
+ "log",
  "serde",
  "thiserror 2.0.17",
 ]

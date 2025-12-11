@@ -9,6 +9,7 @@ linera-sdk = "0.15.5"
 linera-views = "0.15.5"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
+log = "0.4"
 
 [dev-dependencies]
 linera-sdk = { version = "0.15.5", features = ["test"] }
@@ -17,9 +18,9 @@ linera-sdk = { version = "0.15.5", features = ["test"] }
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "oracle_contract"
+name = "oracle-microchain_contract"
 path = "src/contract.rs"
 
 [[bin]]
-name = "oracle_service"
+name = "oracle-microchain_service"
 path = "src/service.rs"

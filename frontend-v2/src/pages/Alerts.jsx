@@ -1,44 +1,122 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Trash2, Bell } from 'lucide-react'
 
-const ACTIVE_ALERTS = [
-  { id: 1, token: 'ETH', condition: 'above', value: 3500, active: true, created: '2 hours ago' },
-  { id: 2, token: 'BTC', condition: 'below', value: 65000, active: false, created: '1 day ago' },
-]
-
-const TRIGGERED_ALERTS = [
-  { id: 1, token: 'ETH', condition: 'above', value: 3500, price: 3523.45, time: '2 hours ago', status: 'active' },
-  { id: 2, token: 'BTC', condition: 'below', value: 65000, price: 64850.23, time: '1 day ago', status: 'triggered' },
-]
-
 export default function Alerts() {
-  const [alerts, setAlerts] = useState(ACTIVE_ALERTS)
+  const [alerts, setAlerts] = useState([])
+  const [triggeredAlerts, setTriggeredAlerts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [newAlert, setNewAlert] = useState({
     token: 'ETH',
     condition: 'above',
     value: '',
   })
 
-  const handleCreateAlert = (e) => {
+  useEffect(() => {
+    fetchAlerts()
+
+    // Request notification permission
+    if (Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+
+    // Listen for alert triggers via WebSocket
+    const ws = new WebSocket('ws://localhost:8090')
+    
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        if (message.type === 'alert_triggered') {
+          // Add to triggered alerts
+          const triggered = {
+            id: message.alert.id,
+            token: message.alert.token,
+            condition: message.alert.condition,
+            value: message.alert.value,
+            price: message.alert.price,
+            status: 'triggered',
+            time: new Date().toLocaleString()
+          }
+          setTriggeredAlerts(prev => [triggered, ...prev])
+          
+          // Show browser notification if permitted
+          if (Notification.permission === 'granted') {
+            new Notification(`Price Alert: ${message.alert.token}`, {
+              body: `${message.alert.token} went ${message.alert.condition} $${message.alert.value} (current: $${message.alert.price})`,
+              icon: '/favicon.ico'
+            })
+          }
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error)
+      }
+    }
+
+    return () => ws.close()
+  }, [])
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/alerts')
+      const data = await response.json()
+      setAlerts(data.active || [])
+      setTriggeredAlerts(data.triggered || [])
+      setLoading(false)
+    } catch (error) {
+      console.error('Failed to fetch alerts:', error)
+      setLoading(false)
+    }
+  }
+
+  const handleCreateAlert = async (e) => {
     e.preventDefault()
     if (!newAlert.value) return
 
-    const alert = {
-      id: Date.now(),
-      token: newAlert.token,
-      condition: newAlert.condition,
-      value: parseFloat(newAlert.value),
-      active: true,
-      created: 'Just now',
-    }
+    try {
+      const response = await fetch('http://localhost:3001/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: newAlert.token,
+          condition: newAlert.condition,
+          value: parseFloat(newAlert.value)
+        })
+      })
 
-    setAlerts([...alerts, alert])
-    setNewAlert({ token: 'ETH', condition: 'above', value: '' })
+      const data = await response.json()
+      if (data.success) {
+        setAlerts([...alerts, data.alert])
+        setNewAlert({ token: 'ETH', condition: 'above', value: '' })
+      }
+    } catch (error) {
+      console.error('Failed to create alert:', error)
+    }
   }
 
-  const handleDeleteAlert = (id) => {
-    setAlerts(alerts.filter(a => a.id !== id))
+  const handleDeleteAlert = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/alerts/${id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setAlerts(alerts.filter(a => a.id !== id))
+      }
+    } catch (error) {
+      console.error('Failed to delete alert:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading alerts...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -193,7 +271,10 @@ export default function Alerts() {
         <h2 className="text-xl font-bold mb-6">Triggered Alerts</h2>
 
         <div className="space-y-3">
-          {TRIGGERED_ALERTS.map((alert, index) => (
+          {triggeredAlerts.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No triggered alerts yet</p>
+          ) : (
+            triggeredAlerts.map((alert, index) => (
             <motion.div
               key={alert.id}
               initial={{ opacity: 0, x: -20 }}
@@ -228,7 +309,8 @@ export default function Alerts() {
                 </div>
               </div>
             </motion.div>
-          ))}
+            ))
+          )}
         </div>
       </motion.div>
     </div>

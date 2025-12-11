@@ -1,4 +1,5 @@
 use linera_sdk::views::{MapView, RegisterView, RootView, ViewStorageContext};
+use linera_sdk::linera_base_types::ChainId;
 use oracle_microchain::{AlertConfig, Candle, CandleInterval, OracleReputation, PriceData};
 
 /// Oracle microchain state with full feature set
@@ -10,6 +11,12 @@ pub struct OracleState {
     
     /// Latest price for quick access
     pub latest_price: RegisterView<Option<PriceData>>,
+    
+    /// Registered oracle providers: source_name -> chain_id
+    pub providers: MapView<String, ChainId>,
+    
+    /// Pending price submissions for aggregation: token -> Vec<(source, price, timestamp)>
+    pub pending_prices: MapView<String, Vec<(String, f64, u64)>>,
     
     /// 1-second candles: timestamp -> candle
     pub candles_1s: MapView<String, Vec<Candle>>,

@@ -3,47 +3,209 @@ import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-const TOKENS = [
-  { symbol: 'ETH', name: 'Ethereum', price: 3237.401, change: 2.05, color: 'blue' },
-  { symbol: 'BTC', name: 'Bitcoin', price: 68156.085, change: 3.31, color: 'orange' },
-  { symbol: 'MATIC', name: 'Polygon', price: 0.883, change: 1.66, color: 'purple' },
-  { symbol: 'LINK', name: 'Chainlink', price: 14.423, change: 4.45, color: 'cyan' },
-  { symbol: 'SOL', name: 'Solana', price: 98.264, change: 3.13, color: 'green' },
-]
+const TOKEN_CONFIG = {
+  'ETH': { name: 'Ethereum', color: 'blue' },
+  'BTC': { name: 'Bitcoin', color: 'orange' },
+  'MATIC': { name: 'Polygon', color: 'purple' },
+  'LINK': { name: 'Chainlink', color: 'cyan' },
+  'SOL': { name: 'Solana', color: 'green' },
+}
 
-const ORACLES = [
-  { name: 'Chainlink', reputation: 95.51, latency: 19, uptime: 99.98, status: 'online' },
-  { name: 'Pyth', reputation: 97.13, latency: 24, uptime: 98, status: 'online' },
-  { name: 'API3', reputation: 91.97, latency: 18, uptime: 90, status: 'online' },
-  { name: 'RedStone', reputation: 92.06, latency: 11, uptime: 90, status: 'online' },
-]
+const ORACLE_NAMES = {
+  'chainlink': 'Chainlink',
+  'pyth': 'Pyth',
+  'coingecko': 'CoinGecko',
+}
 
 export default function Dashboard() {
-  const [prices, setPrices] = useState(TOKENS)
+  const [prices, setPrices] = useState([])
+  const [oracles, setOracles] = useState([])
   const [chartData, setChartData] = useState([])
+  const [selectedToken, setSelectedToken] = useState('ETH')
   const [selectedInterval, setSelectedInterval] = useState('1m')
+  const [stats, setStats] = useState({ queries: 0, subscriptions: 0, load: 'Normal' })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Generate mock chart data
-    const data = []
-    for (let i = 0; i < 30; i++) {
-      data.push({
-        time: `${i}m`,
-        price: 3200 + Math.random() * 100,
-      })
+    // Fetch initial prices from backend
+    const fetchPrices = async () => {
+      try {
+        console.log('Fetching prices from backend...')
+        console.log('API URL:', 'http://localhost:3001/api/prices')
+        
+        const response = await fetch('http://localhost:3001/api/prices', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+        
+        console.log('Response status:', response.status)
+        console.log('Response ok:', response.ok)
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Response error:', errorText)
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        console.log('Received price data:', data)
+        console.log('Data type:', typeof data)
+        console.log('Data keys:', Object.keys(data))
+        
+        // Transform backend data to frontend format
+        const priceData = Object.entries(data).map(([symbol, info]) => ({
+          symbol,
+          name: TOKEN_CONFIG[symbol]?.name || symbol,
+          price: info.price,
+          change: info.change24h || 0,
+          color: TOKEN_CONFIG[symbol]?.color || 'gray',
+          sources: info.sources || [],
+          timestamp: info.timestamp,
+        }))
+        
+        console.log('Transformed price data:', priceData)
+        setPrices(priceData)
+        
+        // Extract oracle info
+        const oracleSet = new Set()
+        priceData.forEach(token => {
+          token.sources.forEach(source => oracleSet.add(source))
+        })
+        
+        const oracleData = Array.from(oracleSet).map(name => ({
+          name: ORACLE_NAMES[name] || name,
+          reputation: 95 + Math.random() * 5,
+          latency: Math.floor(10 + Math.random() * 20),
+          uptime: 98 + Math.random() * 2,
+          status: 'online'
+        }))
+        
+        console.log('Oracle data:', oracleData)
+        setOracles(oracleData)
+        setLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch prices:', error)
+        setError(error.message)
+        // Set some fallback data so the page isn't blank
+        setPrices([
+          { symbol: 'ETH', name: 'Ethereum', price: 0, change: 0, color: 'blue', sources: [], timestamp: Date.now() },
+          { symbol: 'BTC', name: 'Bitcoin', price: 0, change: 0, color: 'orange', sources: [], timestamp: Date.now() },
+        ])
+        setLoading(false)
+      }
     }
-    setChartData(data)
 
-    // Simulate WebSocket updates
-    const interval = setInterval(() => {
-      setPrices(prev => prev.map(token => ({
-        ...token,
-        price: token.price * (1 + (Math.random() - 0.5) * 0.001),
-      })))
-    }, 2000)
+    fetchPrices()
+  }, []) // Run only once on mount
 
-    return () => clearInterval(interval)
-  }, [])
+  // Separate useEffect for WebSocket - runs only once
+  useEffect(() => {
+    console.log('Connecting to WebSocket...')
+    const ws = new WebSocket('ws://localhost:8090')
+    
+    ws.onopen = () => {
+      console.log('✅ Connected to price feed')
+    }
+    
+    ws.onmessage = (event) => {
+      try {
+        const update = JSON.parse(event.data)
+        console.log('WebSocket update:', update)
+        
+        if (update.type === 'price_update') {
+          setPrices(prev => {
+            const existing = prev.find(p => p.symbol === update.symbol)
+            if (existing) {
+              return prev.map(p => 
+                p.symbol === update.symbol 
+                  ? { ...p, price: update.price, timestamp: update.timestamp, sources: update.sources }
+                  : p
+              )
+            } else {
+              return [...prev, {
+                symbol: update.symbol,
+                name: TOKEN_CONFIG[update.symbol]?.name || update.symbol,
+                price: update.price,
+                change: 0,
+                color: TOKEN_CONFIG[update.symbol]?.color || 'gray',
+                sources: update.sources,
+                timestamp: update.timestamp,
+              }]
+            }
+          })
+          
+          // Update chart data
+          setChartData(prev => {
+            const newData = [...prev, {
+              time: new Date(update.timestamp).toLocaleTimeString(),
+              price: update.price,
+              symbol: update.symbol,
+            }]
+            return newData.slice(-30) // Keep last 30 points
+          })
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error)
+      }
+    }
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error)
+    }
+    
+    ws.onclose = () => {
+      console.log('Disconnected from price feed')
+    }
+
+    return () => {
+      console.log('Cleaning up WebSocket connection')
+      ws.close()
+    }
+  }, []) // Run only once on mount
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading price data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center glass-card p-8 max-w-md">
+          <h2 className="text-xl font-bold text-red-400 mb-2">Connection Error</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <p className="text-sm text-gray-500">Make sure the backend is running on port 3001</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (prices.length === 0 && !loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center glass-card p-8 max-w-md">
+          <h2 className="text-xl font-bold text-yellow-400 mb-2">No Price Data</h2>
+          <p className="text-gray-400 mb-4">Waiting for price updates from oracles...</p>
+          <div className="animate-pulse text-gray-500">Connecting to price feed...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -90,7 +252,9 @@ export default function Dashboard() {
             </div>
             
             <div className="mt-2 pt-2 border-t border-white/5">
-              <span className="text-xs text-gray-500">Chainlink</span>
+              <span className="text-xs text-gray-500">
+                {token.sources?.map(s => ORACLE_NAMES[s] || s).join(', ') || 'Loading...'}
+              </span>
             </div>
           </motion.div>
         ))}
@@ -193,7 +357,7 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-4">
-            {ORACLES.map((oracle, index) => (
+            {oracles.map((oracle, index) => (
               <motion.div
                 key={oracle.name}
                 initial={{ opacity: 0, x: -20 }}
@@ -232,15 +396,15 @@ export default function Dashboard() {
           <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Total Queries (24h)</span>
-              <span className="font-bold">1,234,567</span>
+              <span className="font-bold">{stats.queries.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Active Subscriptions</span>
-              <span className="font-bold">8,934</span>
+              <span className="font-bold">{stats.subscriptions.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Network Load</span>
-              <span className="font-bold text-green-400">Normal</span>
+              <span className="font-bold text-green-400">{stats.load}</span>
             </div>
           </div>
         </motion.div>

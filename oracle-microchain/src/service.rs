@@ -5,15 +5,22 @@ mod state;
 use std::sync::Arc;
 
 use async_graphql::{EmptySubscription, Object, Schema};
-use linera_sdk::{abi::WithServiceAbi, Service, ServiceRuntime, views::View};
+use linera_sdk::{
+    abi::WithServiceAbi, 
+    graphql::GraphQLMutationRoot,
+    linera_base_types::ChainId,
+    Service, ServiceRuntime, views::View
+};
 use oracle_microchain::{
-    AggregatedStats, AlertConfig, Candle, CandleInterval, OracleAbi, OracleReputation, PriceData,
+    AggregatedStats, AlertConfig, Candle, CandleInterval, OracleAbi, OracleReputation, 
+    Operation, PriceData,
 };
 
 use self::state::OracleState;
 
 pub struct OracleService {
     state: Arc<OracleState>,
+    runtime: Arc<ServiceRuntime<Self>>,
 }
 
 linera_sdk::service!(OracleService);
@@ -31,6 +38,7 @@ impl Service for OracleService {
             .expect("Failed to load state");
         OracleService {
             state: Arc::new(state),
+            runtime: Arc::new(runtime),
         }
     }
 
@@ -38,8 +46,9 @@ impl Service for OracleService {
         let schema = Schema::build(
             QueryRoot {
                 state: self.state.clone(),
+                runtime: self.runtime.clone(),
             },
-            EmptyMutation,
+            Operation::mutation_root(self.runtime.clone()),
             EmptySubscription,
         )
         .finish();
@@ -49,6 +58,7 @@ impl Service for OracleService {
 
 struct QueryRoot {
     state: Arc<OracleState>,
+    runtime: Arc<ServiceRuntime<OracleService>>,
 }
 
 #[Object]
@@ -144,6 +154,19 @@ impl QueryRoot {
         reputations
     }
 
+    /// Get number of registered providers
+    async fn provider_count(&self) -> i32 {
+        self.state.providers.count().await.unwrap_or(0) as i32
+    }
+
+    /// Get pending submission count for a token
+    async fn pending_submission_count(&self, token: String) -> i32 {
+        match self.state.pending_prices.get(&token).await {
+            Ok(Some(pending)) => pending.len() as i32,
+            _ => 0,
+        }
+    }
+
     /// Get aggregated network statistics
     async fn network_stats(&self) -> AggregatedStats {
         let total_queries = self.state.total_queries.get().clone();
@@ -209,11 +232,4 @@ impl QueryRoot {
     }
 }
 
-struct EmptyMutation;
 
-#[Object]
-impl EmptyMutation {
-    async fn dummy(&self) -> bool {
-        true
-    }
-}
