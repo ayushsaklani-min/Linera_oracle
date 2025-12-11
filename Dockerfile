@@ -19,6 +19,18 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
 
 WORKDIR /build
 
+# Copy all project files
+COPY . .
+
+# Install backend dependencies
+RUN cd backend-v2 && npm install
+
+# Install frontend dependencies and build
+RUN cd frontend-v2 && npm install && npm run build
+
+# Make run.bash executable
+RUN chmod +x run.bash
+
 HEALTHCHECK CMD ["curl", "-s", "http://localhost:5173"]
 
-ENTRYPOINT bash /build/run.bash
+ENTRYPOINT ["bash", "/build/run.bash"]

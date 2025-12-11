@@ -233,8 +233,9 @@ sleep 3
 # ----------------------------------------------------------
 echo "🌐 Starting frontend..."
 cd /build/frontend-v2
-npm install
-npm run dev -- --host --port $FRONTEND_PORT &
+
+# Serve built files with http-server
+npx http-server dist -p $FRONTEND_PORT --cors &
 FRONTEND_PID=$!
 
 echo ""
