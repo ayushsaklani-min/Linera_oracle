@@ -100,6 +100,30 @@ Should return:
 }
 ```
 
+## Important Note
+
+**Railway Deployment runs in MOCK MODE** - The backend fetches real prices from oracles (Chainlink, Pyth, CoinGecko) but doesn't store them on the Linera blockchain. This is because:
+
+1. Linera network requires significant resources (4GB+ RAM)
+2. Genesis creation gets killed by Railway's process limits
+3. Full blockchain integration works perfectly with Docker Compose locally
+
+**What Works on Railway:**
+✅ Real-time price fetching from 3 oracles
+✅ Price aggregation (median, TWAP, VWAP)
+✅ WebSocket real-time updates
+✅ Frontend dashboard
+✅ Analytics and monitoring
+✅ REST API endpoints
+
+**What Requires Local Docker:**
+❌ Linera blockchain storage
+❌ Cross-chain messaging
+❌ On-chain alerts
+❌ GraphQL queries to blockchain
+
+**For Full Demo:** Use `docker compose up` locally - everything works!
+
 ## Troubleshooting
 
 ### Build Fails
@@ -107,8 +131,9 @@ Should return:
 **Issue**: Out of memory during Rust compilation
 
 **Solution**: 
-- Railway free tier has 8GB RAM (should work)
-- If still failing, upgrade to Pro plan ($20/month, 32GB RAM)
+- Railway automatically uses lightweight mode (no Linera compilation)
+- Build should complete in 5-10 minutes
+- If still failing, check Railway logs
 
 ### Container Crashes
 

@@ -12,13 +12,19 @@ import fetch from "node-fetch";
 const PORT = process.env.PORT || 3001;
 const WS_PORT = process.env.WS_PORT || 8090;
 const LINERA_RPC = process.env.LINERA_RPC || "http://localhost:8080";
+const MOCK_MODE = process.env.MOCK_MODE === "true";
 
 // Railway detection
 const IS_RAILWAY = process.env.RAILWAY_ENVIRONMENT !== undefined;
 if (IS_RAILWAY) {
   console.log("🚂 Running on Railway");
   console.log(`   Environment: ${process.env.RAILWAY_ENVIRONMENT}`);
-  console.log(`   Service: ${process.env.RAILWAY_SERVICE_NAME || 'unknown'}`);
+  console.log(`   Service: ${process.env.RAILWAY_SERVICE_NAME || "unknown"}`);
+}
+
+if (MOCK_MODE) {
+  console.log("⚠️  MOCK MODE ENABLED - No Linera blockchain integration");
+  console.log("   Prices will be fetched from oracles but not stored on-chain");
 }
 
 // Tokens to track

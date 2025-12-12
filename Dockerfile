@@ -42,14 +42,15 @@ RUN npm ci && npm run build
 
 WORKDIR /build
 
-# Make run.bash executable
-RUN chmod +x run.bash
+# Make scripts executable
+RUN chmod +x run.bash run-railway.bash
 
 # Expose ports
 EXPOSE 3001 5173 8080 8081 8090
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3001/health || exit 1
 
-ENTRYPOINT ["bash", "/build/run.bash"]
+# Use Railway script if on Railway, otherwise full script
+ENTRYPOINT ["bash", "-c", "if [ -n \"${RAILWAY_ENVIRONMENT:-}\" ]; then exec bash /build/run-railway.bash; else exec bash /build/run.bash; fi"]
