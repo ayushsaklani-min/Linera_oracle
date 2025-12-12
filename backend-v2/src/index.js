@@ -69,7 +69,7 @@ class SynapseNetBackend {
     };
 
     this.setupExpress();
-    this.setupWebSocket();
+    // WebSocket will be setup after HTTP server starts
     this.startPriceUpdates();
   }
 
@@ -96,6 +96,9 @@ class SynapseNetBackend {
   setupExpress() {
     this.app.use(cors());
     this.app.use(express.json());
+    
+    // Store the HTTP server instance for WebSocket
+    this.httpServer = null;
 
     // Health check
     this.app.get("/health", (req, res) => {
@@ -435,14 +438,17 @@ class SynapseNetBackend {
       }
     });
 
-    this.app.listen(PORT, () => {
+    this.httpServer = this.app.listen(PORT, () => {
       console.log(`🌐 HTTP API listening on port ${PORT}`);
+      // Setup WebSocket after HTTP server is ready
+      this.setupWebSocket();
     });
   }
 
   setupWebSocket() {
-    this.wsServer = new WebSocketServer({ port: WS_PORT });
-    console.log(`🌐 WebSocket server on port ${WS_PORT}`);
+    // Attach WebSocket to the same HTTP server
+    this.wsServer = new WebSocketServer({ server: this.httpServer });
+    console.log(`🌐 WebSocket server attached to HTTP server on port ${PORT}`);
 
     this.wsServer.on("connection", (ws) => {
       console.log("📡 Client connected");
