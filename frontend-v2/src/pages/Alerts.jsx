@@ -57,7 +57,8 @@ export default function Alerts() {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/alerts')
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/alerts`)
       const data = await response.json()
       setAlerts(data.active || [])
       setTriggeredAlerts(data.triggered || [])
@@ -73,7 +74,8 @@ export default function Alerts() {
     if (!newAlert.value) return
 
     try {
-      const response = await fetch('http://localhost:3001/api/alerts', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/alerts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,7 +97,8 @@ export default function Alerts() {
 
   const handleDeleteAlert = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/alerts/${id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/alerts/${id}`, {
         method: 'DELETE'
       })
 

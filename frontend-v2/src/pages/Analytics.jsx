@@ -19,7 +19,8 @@ export default function Analytics() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/analytics')
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+        const response = await fetch(`${apiUrl}/api/analytics`)
         const data = await response.json()
         
         setQueryVolumeData(data.queryVolume)

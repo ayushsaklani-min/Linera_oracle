@@ -31,10 +31,11 @@ export default function Dashboard() {
     // Fetch initial prices from backend
     const fetchPrices = async () => {
       try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
         console.log('Fetching prices from backend...')
-        console.log('API URL:', 'http://localhost:3001/api/prices')
+        console.log('API URL:', `${apiUrl}/api/prices`)
         
-        const response = await fetch('http://localhost:3001/api/prices', {
+        const response = await fetch(`${apiUrl}/api/prices`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -103,8 +104,10 @@ export default function Dashboard() {
 
   // Separate useEffect for WebSocket - runs only once
   useEffect(() => {
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8090'
     console.log('Connecting to WebSocket...')
-    const ws = new WebSocket('ws://localhost:8090')
+    console.log('WebSocket URL:', wsUrl)
+    const ws = new WebSocket(wsUrl)
     
     ws.onopen = () => {
       console.log('✅ Connected to price feed')
