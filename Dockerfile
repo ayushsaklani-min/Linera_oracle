@@ -52,5 +52,5 @@ EXPOSE 3001 5173 8080 8081 8090
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3001/health || exit 1
 
-# Use Railway script if on Railway, otherwise full script
-ENTRYPOINT ["bash", "-c", "if [ -n \"${RAILWAY_ENVIRONMENT:-}\" ]; then exec bash /build/run-railway.bash; else exec bash /build/run.bash; fi"]
+# Default to full script (Railway overrides with railway.json startCommand)
+ENTRYPOINT ["bash", "/build/run.bash"]
