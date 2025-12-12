@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["...", "protobuf", "pkg-config", "clang"]
+
+[phases.build]
+cmds = ["echo 'Using Dockerfile for build'"]
+
+[start]
+cmd = "bash /build/run.bash"

@@ -8,9 +8,18 @@ import { PriceAggregator } from "./aggregation/aggregator.js";
 import { CandleGenerator } from "./aggregation/candles.js";
 import fetch from "node-fetch";
 
+// Railway provides PORT automatically, fallback to 3001 for local
 const PORT = process.env.PORT || 3001;
 const WS_PORT = process.env.WS_PORT || 8090;
 const LINERA_RPC = process.env.LINERA_RPC || "http://localhost:8080";
+
+// Railway detection
+const IS_RAILWAY = process.env.RAILWAY_ENVIRONMENT !== undefined;
+if (IS_RAILWAY) {
+  console.log("🚂 Running on Railway");
+  console.log(`   Environment: ${process.env.RAILWAY_ENVIRONMENT}`);
+  console.log(`   Service: ${process.env.RAILWAY_SERVICE_NAME || 'unknown'}`);
+}
 
 // Tokens to track
 const TOKENS = ["ETH", "BTC", "SOL", "MATIC", "LINK"];

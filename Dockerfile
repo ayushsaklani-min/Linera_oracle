@@ -2,20 +2,30 @@ FROM rust:1.86-slim
 
 SHELL ["bash", "-c"]
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     protobuf-compiler \
     clang \
     make \
-    jq
+    jq \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
+# Install Rust toolchain
 RUN rustup target add wasm32-unknown-unknown
-RUN cargo install --locked linera-service@0.15.5 linera-storage-service@0.15.5
 
-RUN apt-get install -y curl
+# Install Linera (with retry logic for network issues)
+RUN for i in 1 2 3; do \
+    cargo install --locked linera-service@0.15.5 linera-storage-service@0.15.5 && break || \
+    (echo "Retry $i failed, waiting..." && sleep 10); \
+    done
+
+# Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -y nodejs \
-    && npm install -g pnpm http-server
+    && npm install -g pnpm \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
@@ -23,14 +33,23 @@ WORKDIR /build
 COPY . .
 
 # Install backend dependencies
-RUN cd backend-v2 && npm install
+WORKDIR /build/backend-v2
+RUN npm ci --only=production
 
 # Install frontend dependencies and build
-RUN cd frontend-v2 && npm install && npm run build
+WORKDIR /build/frontend-v2
+RUN npm ci && npm run build
+
+WORKDIR /build
 
 # Make run.bash executable
 RUN chmod +x run.bash
 
-HEALTHCHECK CMD ["curl", "-s", "http://localhost:5173"]
+# Expose ports
+EXPOSE 3001 5173 8080 8081 8090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
 
 ENTRYPOINT ["bash", "/build/run.bash"]

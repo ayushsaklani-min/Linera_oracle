@@ -432,11 +432,21 @@ docker compose up
 ```
 
 ### Production Deployment
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for:
-- Vercel (frontend)
-- Render (backend + Linera)
-- Environment variables
-- Monitoring setup
+
+**Railway (Recommended - 8GB RAM Free Tier)**
+See [RAILWAY.md](./RAILWAY.md) for complete guide.
+
+Quick steps:
+1. Go to https://railway.app
+2. Deploy from GitHub: `ayushsaklani-min/Linera_oracle`
+3. Railway auto-detects Dockerfile
+4. Wait 15-20 minutes for first build
+5. Access at `https://your-app.railway.app`
+
+**Alternative Platforms**
+- Vercel (frontend only) - See [DEPLOYMENT.md](./DEPLOYMENT.md)
+- Render (requires paid plan for 2GB+ RAM)
+- DigitalOcean App Platform ($5/month)
 
 ---
 
