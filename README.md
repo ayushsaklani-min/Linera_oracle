@@ -3,9 +3,25 @@
 **Real-time multi-oracle price aggregation on Linera microchains**
 
 Built by Ayush for Linera Buildathon
-  
+
+> **TL;DR for Judges:**  
 > SynapseNet is a multi-oracle price network where each oracle runs on its own Linera microchain.  
 > Prices are aggregated in real time via cross-chain messaging and streamed instantly to DeFi apps.
+
+---
+
+## 🚀 **NEXT: Powering a Prediction Market on Linera**
+
+> **SynapseNet will integrate with a decentralized prediction market** — demonstrating how Linera's oracle infrastructure enables real-world DeFi applications with **instant settlement** and **multi-oracle security**.
+>
+> 🎯 **Example:** "Will ETH be above $3,500 in 1 hour?"  
+> ⚡ **Settlement:** <1 second (vs 12+ seconds on Ethereum)  
+> 🔒 **Security:** 3+ oracle sources (vs single oracle risk)  
+> 💰 **Fees:** Near-zero (vs $5-50 per bet on L1)
+>
+> **This showcases the full power of Linera's microchain architecture** — where independent applications communicate seamlessly to create a complete DeFi ecosystem.
+>
+> [See detailed integration plan below ↓](#-future-integration-prediction-market)
 
 ---
 
@@ -21,11 +37,11 @@ Today's DeFi protocols depend on **single-oracle price feeds** or loosely couple
 
 This creates serious risks:
 
--  **Oracle manipulation** can liquidate entire protocols
--  **Outages or stale feeds** cause cascading failures
--  **No coordination between oracles** — each operates in isolation
--  **High latency** when aggregating prices on-chain
--  **Poor fit for multi-chain DeFi**
+- **Oracle manipulation** can liquidate entire protocols
+- **Outages or stale feeds** cause cascading failures
+- **No coordination between oracles** — each operates in isolation
+- **High latency** when aggregating prices on-chain
+- **Poor fit for multi-chain DeFi**
 
 Existing oracle networks were not designed for **real-time, multi-source coordination**.
 
@@ -57,11 +73,11 @@ On traditional blockchains:
 
 Linera enables a new oracle design:
 
--  **One microchain per oracle provider**
--  **Direct cross-chain messaging for aggregation**
--  **Sub-second finality for real-time prices**
--  **Event streaming instead of polling**
--  **Clean separation of providers, aggregator, and consumers**
+- **One microchain per oracle provider**
+- **Direct cross-chain messaging for aggregation**
+- **Sub-second finality for real-time prices**
+- **Event streaming instead of polling**
+- **Clean separation of providers, aggregator, and consumers**
 
 Without Linera's microchains, this architecture would either be:
 - Too slow
@@ -151,6 +167,119 @@ SynapseNet uses a **6-chain architecture**:
 - Historical price charts with more timeframes
 - Mobile app for price monitoring
 - Public testnet deployment
+
+---
+
+## 🔮 Future Integration: Prediction Market
+
+> **🎯 BUILDING NEXT:** A decentralized prediction market powered by SynapseNet — demonstrating the full potential of Linera's microchain ecosystem.
+
+---
+
+### 💡 The Vision
+
+A **real-time prediction market** where users can bet on cryptocurrency price movements, with **instant settlement** powered by SynapseNet's multi-oracle price feeds.
+
+**Example Markets:**
+- "Will ETH be above $3,500 in 1 hour?" 
+- "Will BTC reach $100,000 by end of month?"
+- "Will SOL outperform ETH this week?"
+
+### 🎯 Why This Integration Matters
+
+**For SynapseNet:**
+- Demonstrates real-world oracle usage
+- Shows cross-chain application integration
+- Proves reliability under high-frequency trading
+
+**For Linera Ecosystem:**
+- First prediction market on Linera microchains
+- Showcases sub-second settlement (impossible on traditional chains)
+- Demonstrates cross-application messaging
+
+### Architecture Preview
+
+```
+┌─────────────────────┐
+│  SynapseNet Oracle  │ ← Provides price feeds
+└──────────┬──────────┘
+           │ Cross-chain price data
+           ↓
+┌─────────────────────┐
+│  Prediction Market  │ ← Creates markets & accepts bets
+│  - Market Chain     │
+│  - Betting Logic    │
+│  - Odds Calculation │
+└──────────┬──────────┘
+           │ Settlement request
+           ↓
+┌─────────────────────┐
+│  Settlement Chain   │ ← Resolves bets & pays winners
+│  - Verify prices    │
+│  - Calculate payouts│
+│  - Distribute funds │
+└─────────────────────┘
+```
+
+### Key Features (Planned)
+
+- **Instant Bet Placement** - Sub-second confirmation  
+- **Real-Time Odds** - Updates as bets come in  
+- **Automatic Settlement** - Oracle triggers payouts  
+- **Multi-Oracle Verification** - Uses SynapseNet's aggregated prices  
+- **Cross-Chain Liquidity** - Bet from any chain  
+- **Transparent History** - All bets on-chain
+
+### Why Only Possible on Linera
+
+Traditional prediction markets suffer from:
+- ❌ Slow settlement (wait for block confirmations)
+- ❌ High gas fees (every bet costs $5-50)
+- ❌ Oracle manipulation risk (single price source)
+- ❌ Poor UX (transactions take minutes)
+
+**Linera + SynapseNet enables:**
+- Instant settlement (<1 second)
+- Negligible fees (microchain efficiency)
+- Multi-oracle security (3+ price sources)
+- CEX-like UX (feels like Binance, runs on-chain)
+
+### 📅 Development Timeline
+
+```
+Phase 1 (COMPLETE)
+├─ SynapseNet Oracle deployed
+├─ Multi-oracle aggregation working
+├─ Real-time price feeds live
+└─ Cross-chain messaging proven
+
+Phase 2 (IN PROGRESS)
+├─ Prediction Market smart contract
+├─ Betting logic & odds calculation
+├─ SynapseNet integration
+└─ Settlement automation
+
+Phase 3 (PLANNED)
+├─ Advanced market types
+├─ Liquidity pools
+├─ Mobile app
+└─ Public testnet launch
+```
+
+---
+
+### 🌟 Impact Statement
+
+**This integration will demonstrate the full power of Linera's microchain architecture** — where independent applications communicate seamlessly to create a complete DeFi ecosystem.
+
+By combining SynapseNet's oracle infrastructure with a prediction market, we showcase:
+- **Real-world oracle usage** (not just price display)
+- **Cross-application messaging** (oracle → market → settlement)
+- **Sub-second finality** (instant bet settlement)
+- **Microchain scalability** (each market = separate chain)
+- **DeFi composability** (building blocks for future apps)
+
+**This is what Linera was built for** — fast, scalable, interconnected applications that work together seamlessly.
 
 ---
 
@@ -244,10 +373,10 @@ This will:
    ```
    
    This confirms:
-   - ✅ 7 Linera chains created (Master, Aggregator, 3 Providers, Consumer, Genesis)
-   - ✅ Each chain has unique AccountOwner (public key)
-   - ✅ Wallet managing all chains in one place
-   - ✅ Cross-chain messaging infrastructure ready
+   - 7 Linera chains created (Master, Aggregator, 3 Providers, Consumer, Genesis)
+   - Each chain has unique AccountOwner (public key)
+   - Wallet managing all chains in one place
+   - Cross-chain messaging infrastructure ready
 
 4. **Create Alert**:
    - Go to Alerts page
@@ -641,7 +770,9 @@ This project was built for the Linera Buildathon. Contributions welcome after th
 
 ---
 
+## License
 
+MIT License - see LICENSE file for details
 
 ---
 
@@ -654,11 +785,11 @@ This project was built for the Linera Buildathon. Contributions welcome after th
 
 ---
 
-
+## Contact
 
 Built by **Ayush** for Linera Buildathon 2025
 
 
 ---
 
-**SynapseNet** - Bringing reliable, decentralized price data to Linera microchains 
+**SynapseNet** - Bringing reliable, decentralized price data to Linera microchains 🚀
