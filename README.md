@@ -3,12 +3,31 @@
 **Real-time multi-oracle price aggregation on Linera microchains**
 
 Built by Ayush for Linera Buildathon
+  
+> SynapseNet is a multi-oracle price network where each oracle runs on its own Linera microchain.  
+> Prices are aggregated in real time via cross-chain messaging and streamed instantly to DeFi apps.
 
 ---
 
 ## What is SynapseNet?
 
 SynapseNet is a decentralized oracle network that aggregates cryptocurrency prices from multiple sources (Chainlink, Pyth, CoinGecko) and delivers them through Linera's microchain architecture. It provides DeFi applications with reliable, tamper-proof price data through cross-chain messaging and event streaming.
+
+---
+
+## The Problem SynapseNet Solves
+
+Today's DeFi protocols depend on **single-oracle price feeds** or loosely coupled off-chain aggregators.
+
+This creates serious risks:
+
+-  **Oracle manipulation** can liquidate entire protocols
+-  **Outages or stale feeds** cause cascading failures
+-  **No coordination between oracles** — each operates in isolation
+-  **High latency** when aggregating prices on-chain
+-  **Poor fit for multi-chain DeFi**
+
+Existing oracle networks were not designed for **real-time, multi-source coordination**.
 
 ---
 
@@ -24,6 +43,30 @@ Traditional oracle solutions face critical limitations:
 - **Cross-chain messaging**: Providers communicate directly without intermediaries
 - **Event streaming**: Real-time price updates to subscribers
 - **Sub-second finality**: Instant price aggregation
+
+---
+
+## Why This Is Only Possible on Linera
+
+SynapseNet is not just deployed on Linera — it is **architected around Linera's microchains**.
+
+On traditional blockchains:
+- All oracles compete for the same global state
+- Aggregation becomes slow and expensive
+- Cross-oracle coordination requires off-chain trust
+
+Linera enables a new oracle design:
+
+-  **One microchain per oracle provider**
+-  **Direct cross-chain messaging for aggregation**
+-  **Sub-second finality for real-time prices**
+-  **Event streaming instead of polling**
+-  **Clean separation of providers, aggregator, and consumers**
+
+Without Linera's microchains, this architecture would either be:
+- Too slow
+- Too expensive
+- Or too centralized
 
 ---
 
@@ -177,12 +220,41 @@ This will:
    curl http://localhost:3001/api/prices
    ```
 
-3. **Create Alert**:
+3. **Verify Linera Wallet** (Shows multi-chain setup):
+   ```bash
+   # Find the wallet location
+   docker compose exec oracle bash -c "find /tmp -name 'wallet_*.json' 2>/dev/null | head -1"
+   
+   # Show wallet with all chains
+   docker compose exec oracle bash -c "export LINERA_WALLET=\$(find /tmp -name 'wallet_1.json' 2>/dev/null | head -1) && export LINERA_KEYSTORE=\${LINERA_WALLET/wallet/keystore} && export LINERA_STORAGE=rocksdb:\${LINERA_WALLET%/*}/client_1.db && linera wallet show"
+   ```
+   
+   **Expected Output:**
+   ```
+   ╭───────────────────────────────────────────────────────┬──────────────────────────────────────────────────────╮
+   │ Chain ID                                              ┆ Latest Block                                         │
+   ╞═══════════════════════════════════════════════════════╪══════════════════════════════════════════════════════╡
+   │ 08e1ec683116f9997e5e8a51d8be6fc79f1ce8e4f25a8769fe9ef ┆ AccountOwner:       -                                │
+   │ 5f62bbc8adf                                           ┆ Block Hash:         -                                │
+   │                                                       ┆ Timestamp:          2025-12-13 12:00:18.295703       │
+   │                                                       ┆ Next Block Height:  0                                │
+   ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+   │ [6 more chains...]                                    ┆ ...                                                  │
+   ╰───────────────────────────────────────────────────────┴──────────────────────────────────────────────────────╯
+   ```
+   
+   This confirms:
+   - ✅ 7 Linera chains created (Master, Aggregator, 3 Providers, Consumer, Genesis)
+   - ✅ Each chain has unique AccountOwner (public key)
+   - ✅ Wallet managing all chains in one place
+   - ✅ Cross-chain messaging infrastructure ready
+
+4. **Create Alert**:
    - Go to Alerts page
    - Set "ETH above $3500"
    - Watch it trigger when price crosses threshold
 
-4. **Check Logs**:
+5. **Check Logs**:
    ```bash
    docker logs -f linera_oracle-oracle-1
    ```
@@ -569,9 +641,7 @@ This project was built for the Linera Buildathon. Contributions welcome after th
 
 ---
 
-## License
 
-MIT License - see LICENSE file for details
 
 ---
 
@@ -584,11 +654,11 @@ MIT License - see LICENSE file for details
 
 ---
 
-## Contact
+
 
 Built by **Ayush** for Linera Buildathon 2025
 
 
 ---
 
-**SynapseNet** - Bringing reliable, decentralized price data to Linera microchains 🚀
+**SynapseNet** - Bringing reliable, decentralized price data to Linera microchains 
